@@ -2,16 +2,18 @@ import cv2
 import numpy as np
 import time
 import brickpi3
+from datetime import datetime
 
 line_coordinates = 0, 0, 0, 0
 
 def region_of_interest(edges2):
     height, width = edges2.shape
-    print(width)
-    print(height)
+    #print(width)
+    #print(height)
     mask2 = np.zeros_like(edges2)
 
     # only focus bottom half of the screen
+    # and focus on central third of the screen
     polygon = np.array([[
         (width * 1/3, height * 2 / 3),
         (width * 2/3, height * 2 / 3),
@@ -86,22 +88,26 @@ def line_tracking(line_coordinates, edges):
     delta = bottom_center - x1
     if delta > -100 and delta < 100:
         if (delta < -10):
-            print(bottom_center - x1)
-            BP.set_motor_power(BP.PORT_B, 20)
-            BP.set_motor_position(BP.PORT_D, 100)
+            #print(bottom_center - x1)
+            if delta < -100:
+                delta = -100
+            BP.set_motor_power(BP.PORT_B, 30)
+            BP.set_motor_position(BP.PORT_D, -1 * delta)
 
 
         elif delta > 10:
-            print(bottom_center - x1)
+            #print(bottom_center - x1)
+            if delta < 100:
+                delta = 100
             BP.set_motor_power(BP.PORT_B, 30)
-            BP.set_motor_position(BP.PORT_D, -20)
+            BP.set_motor_position(BP.PORT_D, -1 * delta + 50)
 
         else:
-            print(bottom_center - x1)
+            #print(bottom_center - x1)
             BP.set_motor_power(BP.PORT_B, 30)
             BP.set_motor_position(BP.PORT_D, 0)
     else:
-        print(bottom_center - x1)
+        #print(bottom_center - x1)
         BP.set_motor_power(BP.PORT_B, 0)
         BP.set_motor_position(BP.PORT_D, 0)
 
@@ -112,6 +118,8 @@ cap = cv2.VideoCapture(0)
 
 while (True):
 
+    current_milli_time = int(round(time.time() * 1000))
+    print(current_milli_time)
     _, frame = cap.read()
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     lower_black = np.array([0, 0, 0])
@@ -122,7 +130,7 @@ while (True):
     line_segments = detect_line_segments(cropped_edges)
     lane_lines2 = average_slope_intercept(frame, line_segments)
     cv2.imshow('edges', edges)
-    cv2.imshow('cropped_edges', cropped_edges)
+    #cv2.imshow('cropped_edges', cropped_edges)
     lane_lines_image = display_lines(frame, lane_lines2)
     cv2.imshow("lane lines", lane_lines_image)
 
@@ -133,6 +141,8 @@ while (True):
 
     line_tracking(line_coordinates, edges)
 
+    current_milli_time = int(round(time.time() * 1000)) - current_milli_time
+    print(current_milli_time)
     time.sleep(0.1)
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
