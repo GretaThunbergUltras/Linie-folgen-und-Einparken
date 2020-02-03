@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import time#
+import time
 import imutils
 import brickpi3
 from datetime import datetime
@@ -56,7 +56,26 @@ while True:
     resized = imutils.resize(mask, width = 300)
     ratio = mask.shape[0] / float(resized.shape[0])
     blur = cv2.GaussianBlur(resized, (5,5), 0)
+    
+    height, width = blur.shape
+    #print(width)
+    #print(height)
+    mask3 = np.zeros_like(blur)
+
+    # only focus bottom half of the screen
+    # and focus on central third of the screen
+    polygon = np.array([[
+        (width, height * 1/2),
+        (0, height * 1/2),
+        (width, height),
+        (0, height),
+    ]], np.int32)
+
+    cv2.fillPoly(mask3, polygon, 255)
+    cropped_blur = cv2.bitwise_and(blur, mask3)
+    
     thresh = cv2. threshold(blur, 60, 255, cv2.THRESH_BINARY)[1]
+
     
     #shape detection on main frame for debug
     # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -108,8 +127,9 @@ while True:
         
         
     cv2.imshow("frame", frame)
-    cv2.imshow("mask", mask)
-    cv2.imshow("blur", blur)
+    #cv2.imshow("mask", mask)
+    #cv2.imshow("blur", blur)
+    cv2.imshow("cropped blur", cropped_blur)
 
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
