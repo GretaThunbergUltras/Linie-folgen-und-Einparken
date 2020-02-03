@@ -142,17 +142,16 @@ def line_tracking(line_coordinates, edges, parkdetect):
                 BP.set_motor_power(BP.PORT_B, speed)
                 BP.set_motor_position(BP.PORT_D, 0)
     else:
+        print(parkdetect)
         if parkdetect == 0:
             BP.set_motor_power(BP.PORT_B, speed)
             BP.set_motor_position(BP.PORT_D, 0)
-            print(parkdetect)
         elif parkdetect == 1:
             BP.set_motor_power(BP.PORT_B, speed)
             BP.set_motor_position(BP.PORT_D, 0)
             time.sleep(3)
             BP.set_motor_power(BP.PORT_B, 0)
             BP.set_motor_position(BP.PORT_D, 0)
-            print(parkdetect)
             cv2.destroyAllWindows()
             sys.exit("Geparkt")
 
@@ -229,10 +228,11 @@ while (True):
             cv2.putText(lane_lines_image, "Parking Spot", (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
             cv2.line(lane_lines_image, (cx, frameheight), (cx, cy), (0, 255, 0), 4)
             line_coordinates = [cx, frameheight, cx, cy]
-            if cy >= int(frameheight/3):
-                global parkdetect
-                print("beepboop")
-                parkdetect = 1
+            #if cy >= int(frameheight/3):
+                #global parkdetect
+                #print("beepboop")
+            parkdetect = 1
+            break
 
     # parkdetection end
     cv2.imshow("lane lines", lane_lines_image)
