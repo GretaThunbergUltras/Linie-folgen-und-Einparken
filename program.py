@@ -5,6 +5,7 @@ import imutils
 import brickpi3
 from datetime import datetime
 
+speed = 20
 
 class ShapeDetector:
     def __init__(self):
@@ -14,7 +15,7 @@ class ShapeDetector:
         # initialize the shape name and approximate the contour
         shape = "unidentified"
         peri = cv2.arcLength(c, True)  # umfang/perimeter
-        if peri > 25:  # filter out small objects
+        if peri > 150:  # filter out small objects
             approx = cv2.approxPolyDP(c, 0.04 * peri, True)  # approximated shape
             if len(approx) == 3:
                 shape = "triangle"
@@ -22,7 +23,7 @@ class ShapeDetector:
                 (x, y, w, h) = cv2.boundingRect(approx)
                 ar = w / float(h)  # calculate asprect ratio of rectangle
 
-                shape = "square" if ar >= 0.925 and ar <= 1.075 else "rectangle"
+                shape = "square" if ar >= 0.95 and ar <= 1.05 else "rectangle"
             elif len(approx) == 5:
                 shape = "pentagon"
             else:
@@ -114,32 +115,33 @@ def display_lines(frame, lines, line_color=(0, 255, 0), line_width=4):
 
 def line_tracking(line_coordinates, edges):
     x1, y1, x2, y2 = line_coordinates
-    height, width = edges.shape
+    if (line_coordinates != [0,0,0,0]):
+        height, width = edges.shape
+        print("test")
+        bottom_center = width * 1 / 2
+        delta = bottom_center - x1
+        print(delta)
+        if delta < -100:
+            delta = -100
+        elif delta > 100:
+            delta = 100
+        if delta >= -100 and delta <= 100:
+            if (delta < -10):
+                # print(bottom_center - x1)
+                BP.set_motor_power(BP.PORT_B, speed)
+                BP.set_motor_position(BP.PORT_D, -1 * delta)
 
-    bottom_center = width * 1 / 2
-    delta = bottom_center - x1
-    if delta > -100 and delta < 100:
-        if (delta < -10):
-            # print(bottom_center - x1)
-            if delta < -100:
-                delta = -100
-            BP.set_motor_power(BP.PORT_B, 30)
-            BP.set_motor_position(BP.PORT_D, -1 * delta)
+            elif delta > 10:
+                # print(bottom_center - x1)
+                print("test3")
+                BP.set_motor_power(BP.PORT_B, speed)
+                BP.set_motor_position(BP.PORT_D, -1 * delta + 50)
 
-
-        elif delta > 10:
-            # print(bottom_center - x1)
-            if delta < 100:
-                delta = 100
-            BP.set_motor_power(BP.PORT_B, 30)
-            BP.set_motor_position(BP.PORT_D, -1 * delta + 50)
-
-        else:
-            # print(bottom_center - x1)
-            BP.set_motor_power(BP.PORT_B, 30)
-            BP.set_motor_position(BP.PORT_D, 0)
+            else:
+                # print(bottom_center - x1)
+                BP.set_motor_power(BP.PORT_B, speed)
+                BP.set_motor_position(BP.PORT_D, 0)
     else:
-        # print(bottom_center - x1)
         BP.set_motor_power(BP.PORT_B, 0)
         BP.set_motor_position(BP.PORT_D, 0)
 
@@ -151,7 +153,7 @@ cap = cv2.VideoCapture(0)
 while (True):
 
     current_milli_time = int(round(time.time() * 1000))
-    print(current_milli_time)
+    #print(current_milli_time)
     _, frame = cap.read()
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     lower_black = np.array([0, 0, 0])
@@ -214,7 +216,7 @@ while (True):
             c *= ratio
             c = c.astype("int")
             cv2.drawContours(lane_lines_image, [c], -1, (0, 0, 255), 2)
-            cv2.putText(lane_lines_image, "Parking Spot", (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+            cv2.putText(lane_lines_image, shape, (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
             cv2.line(lane_lines_image, (cx, frameheight), (cx, cy), (0, 255, 0), 4)
             line_coordinates = [cx, frameheight, cx, cy]
 
@@ -224,9 +226,10 @@ while (True):
     print(line_coordinates)
 
     line_tracking(line_coordinates, edges)
-
+    global line_coordinates
+    line_coordinates = 0,0,0,0
     current_milli_time = int(round(time.time() * 1000)) - current_milli_time
-    print(current_milli_time)
+    #print(current_milli_time)
     time.sleep(0.1)
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
