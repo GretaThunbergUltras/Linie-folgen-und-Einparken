@@ -111,7 +111,7 @@ def display_lines(frame, lines, line_color=(0, 255, 0), line_width=4):
     return line_image
 
 
-def line_tracking(line_coordinates, edges, parkdetect):
+def line_tracking(line_coordinates, edges):
     x1, y1, x2, y2 = line_coordinates
     if (line_coordinates != [0,0,0,0]):
         global last_detected_time
@@ -139,8 +139,9 @@ def line_tracking(line_coordinates, edges, parkdetect):
                 BP.set_motor_power(BP.PORT_B, speed)
                 BP.set_motor_position(BP.PORT_D, 0)
     else:
-        last_detected_time_difference = int(round(time.time() * 1000)) - last_detected_time      #print(parkdetect)
-        if last_detected_time_difference < 3000:            print(last_detected_time_difference)
+        last_detected_time_difference = int(round(time.time() * 1000)) - last_detected_time
+        if last_detected_time_difference < 3000:            
+            print(last_detected_time_difference)
             BP.set_motor_power(BP.PORT_B, speed)
             BP.set_motor_position(BP.PORT_D, 0)
         else:
@@ -158,8 +159,6 @@ parkdetect = 0
 cap = cv2.VideoCapture(0)
 
 while (True):
-
-    current_milli_time = int(round(time.time() * 1000))
     _, frame = cap.read()
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     lower_black = np.array([0, 0, 0])
@@ -221,21 +220,15 @@ while (True):
                 cv2.putText(lane_lines_image, "Parking Spot", (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
                 cv2.line(lane_lines_image, (cx, frameheight), (cx, cy), (0, 255, 0), 4)
                 line_coordinates = [cx, frameheight, cx, cy]
-                if cy >= int(frameheight/3):
-                    global parkdetect
-                    print("beepboop")
-                    parkdetect = 1
-                    break
+                break
 
     # parkdetection end
     cv2.imshow("lane lines", lane_lines_image)
     cv2.imshow("redmask", redmask)
-    print(line_coordinates)
 
-    line_tracking(line_coordinates, edges, parkdetect)
+    line_tracking(line_coordinates, edges)
     global line_coordinates
     line_coordinates = [0,0,0,0]
-    current_milli_time = int(round(time.time() * 1000)) - current_milli_time
     time.sleep(0.1)
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
